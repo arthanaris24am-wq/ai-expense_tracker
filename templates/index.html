@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Expense Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+  <nav class="bg-indigo-600 text-white px-6 py-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">💸 AI Expense Tracker</h1>
+    <div>
+      <span id="username" class="mr-6 font-semibold"></span>
+      <a href="/logout" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-white">Logout</a>
+    </div>
+  </nav>
+
+  <main class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- LEFT COLUMN -->
+    <section class="space-y-6">
+
+      <!-- Add Transaction -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">➕ Add Transaction</h2>
+        <input id="amount" type="number" placeholder="Amount (₹)" class="border rounded p-2 w-full mb-2">
+        <input id="description" placeholder="Description (optional)" class="border rounded p-2 w-full mb-2">
+        <textarea id="sms" placeholder="Paste SMS text (optional)" class="border rounded p-2 w-full mb-3"></textarea>
+        <button onclick="addTransaction()" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Add</button>
+      </div>
+
+      <!-- Budget Planner -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">💰 Budget Planner</h2>
+        <input id="budgetCat" placeholder="Category" class="border rounded p-2 w-full mb-2">
+        <input id="budgetAmt" type="number" placeholder="Monthly Limit (₹)" class="border rounded p-2 w-full mb-2">
+        <button onclick="setBudget()" class="bg-green-600 text-white px-4 py-2 rounded w-full mb-3">Save Budget</button>
+        <button onclick="fetchBudgets()" class="bg-blue-500 text-white px-4 py-2 rounded w-full">View Budgets</button>
+        <div id="budgetList" class="mt-3 text-sm text-gray-600"></div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">🚨 Alerts</h2>
+        <button onclick="fetchAlerts()" class="bg-red-500 text-white px-3 py-1 rounded">Refresh</button>
+        <button onclick="clearAlerts()" class="bg-gray-500 text-white px-3 py-1 rounded ml-2">Clear</button>
+        <ul id="alertList" class="mt-3 text-sm text-gray-700"></ul>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <section class="space-y-6">
+
+      <!-- Dashboard -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">📊 Dashboard</h2>
+        <canvas id="categoryChart" height="200"></canvas>
+        <canvas id="dailyChart" height="200" class="mt-6"></canvas>
+      </div>
+
+      <!-- AI Insights -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">💡 AI Insights</h2>
+        <button onclick="getInsights()" class="bg-purple-600 text-white px-4 py-2 rounded w-full mb-3">Generate Insights</button>
+        <div id="insightText" class="text-sm text-gray-700 whitespace-pre-line"></div>
+      </div>
+
+      <!-- Chatbot -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">🤖 AI Chatbot</h2>
+        <div id="chatBox" class="h-64 overflow-y-auto border rounded p-3 mb-3 bg-gray-50 text-sm"></div>
+        <input id="chatInput" placeholder="Ask something..." class="border rounded p-2 w-full mb-2">
+        <button onclick="sendChat()" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Send</button>
+      </div>
+
+      <!-- OCR Receipt Upload -->
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-3">🧾 Receipt OCR</h2>
+        <input type="file" id="receiptFile" class="mb-3">
+        <button onclick="uploadReceipt()" class="bg-yellow-600 text-white px-4 py-2 rounded w-full mb-3">Upload & Read</button>
+        <div id="receiptText" class="text-sm text-gray-700 whitespace-pre-line"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const username = "{{ username }}";
+    document.getElementById("username").innerText = "Welcome, " + username + "!";
+
+    async function addTransaction() {
+      const data = {
+        amount: parseFloat(document.getElementById("amount").value),
+        description: document.getElementById("description").value,
+        sms: document.getElementById("sms").value
+      };
+      const res = await fetch("/add_transaction", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      });
+      const j = await res.json();
+      alert(j.success ? "Transaction added!" : j.error);
+      loadDashboard();
+    }
+
+    async function setBudget() {
+      const data = {
+        category: document.getElementById("budgetCat").value,
+        amount: parseFloat(document.getElementById("budgetAmt").value)
+      };
+      const res = await fetch("/set_budget", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      });
+      const j = await res.json();
+      alert("Budget Saved!");
+    }
+
+    async function fetchBudgets() {
+      const res = await fetch("/get_budget");
+      const j = await res.json();
+      const div = document.getElementById("budgetList");
+      div.innerHTML = "";
+      for (const [cat, amt] of Object.entries(j)) {
+        div.innerHTML += `<p><b>${cat}</b>: ₹${amt}</p>`;
+      }
+    }
+
+    async function fetchAlerts() {
+      const res = await fetch("/alerts");
+      const j = await res.json();
+      const ul = document.getElementById("alertList");
+      ul.innerHTML = "";
+      j.forEach(a => {
+        ul.innerHTML += `<li>⚠️ ${a.text} <small>(${a.created_at})</small></li>`;
+      });
+    }
+
+    async function clearAlerts() {
+      await fetch("/alerts", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({clear_all: true})
+      });
+      document.getElementById("alertList").innerHTML = "";
+    }
+
+    async function getInsights() {
+      document.getElementById("insightText").innerText = "Generating insights...";
+      const res = await fetch("/insights");
+      const j = await res.json();
+      document.getElementById("insightText").innerText = j.insight;
+    }
+
+    async function sendChat() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+      if (!message) return;
+      const box = document.getElementById("chatBox");
+      box.innerHTML += `<div><b>You:</b> ${message}</div>`;
+      input.value = "";
+      const res = await fetch("/chatbot", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message})
+      });
+      const j = await res.json();
+      box.innerHTML += `<div class='ml-4 text-indigo-700'><b>AI:</b> ${j.response}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function uploadReceipt() {
+      const fileInput = document.getElementById("receiptFile");
+      if (!fileInput.files.length) return alert("Please choose a file");
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      const res = await fetch("/upload_receipt", { method: "POST", body: formData });
+      const j = await res.json();
+      document.getElementById("receiptText").innerText = j.detection || j.error;
+    }
+
+    // -------- Dashboard ---------
+    let catChart, dailyChart;
+    async function loadDashboard() {
+      const res = await fetch("/dashboard_data");
+      const j = await res.json();
+      const cat = Object.keys(j.by_category);
+      const val = Object.values(j.by_category);
+
+      if (catChart) catChart.destroy();
+      catChart = new Chart(document.getElementById("categoryChart"), {
+        type: "bar",
+        data: { labels: cat, datasets: [{ label: "Spending by Category", data: val }] },
+      });
+
+      const days = j.daily.map(x => x.date);
+      const amounts = j.daily.map(x => x.amount);
+      if (dailyChart) dailyChart.destroy();
+      dailyChart = new Chart(document.getElementById("dailyChart"), {
+        type: "line",
+        data: { labels: days, datasets: [{ label: "Daily Spending", data: amounts, fill: false, borderWidth: 2 }] }
+      });
+    }
+
+    loadDashboard();
+  </script>
+
+</body>
+</html>

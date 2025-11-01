@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Expense Tracker - Sign Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="glass p-10 w-[420px] text-center text-white">
+    <h1 class="text-4xl font-bold mb-2">Create Your Account ✨</h1>
+    <p class="text-gray-200 mb-6">Start tracking your expenses with AI insights</p>
+
+    <form action="/signup" method="POST" class="space-y-4">
+      <input type="text" name="username" placeholder="Username" required
+        class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input type="text" name="account_no" placeholder="Account Number" required
+        class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input type="email" name="email" placeholder="Email" required
+        class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <input type="password" name="password" placeholder="Password" required
+        class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+
+      <button type="submit"
+        class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 py-3 rounded-xl font-semibold hover:scale-105 transition-transform">
+        Sign Up
+      </button>
+    </form>
+
+    <p class="text-gray-200 mt-6">
+      Already have an account? 
+      <a href="/login" class="text-yellow-300 font-medium hover:underline">Login</a>
+    </p>
+  </div>
+</body>
+</html>
